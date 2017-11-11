@@ -24,6 +24,8 @@ while episode < num_episodes and np.mean(performance) < 0.78:
 
     while steps < 99 and not done:
         steps += 1
+        # note that this approach consists of adding to the observed Q-table
+        # a noise term (identically distributed for all actions)
         action = np.argmax(
             Q[state, :] + np.random.randn(1, env.action_space.n) * 1. / (episode + 1)
             )
