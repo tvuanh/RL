@@ -15,7 +15,7 @@ class FrozenLakeQTable(object):
         self.Qtable = np.zeros(
             (16, len(self.actions_space))
             ) # 16 state-rows, 4 action-columns
-        self.episodes = np.ones((16, 4)) # episodes counter per state
+        self.counters = np.ones(self.Qtable.shape) # episodes counter per state
 
     def epsilon_greedy_action(self, state, epsilon):
         if random.random() < epsilon:
@@ -30,9 +30,8 @@ class FrozenLakeQTable(object):
         R = self.transform_reward(reward, done)
         maxNextQ = np.max(self.Qtable[next_state, :])
         update = R + done * self.gamma * maxNextQ - self.Qtable[state, action]
-        self.Qtable[state, action] += update / self.episodes[state, action]
-        if done:
-            self.episodes[state, action] += 1
+        self.Qtable[state, action] += update / self.counters[state, action]
+        self.counters[state, action] += 1
 
     def transform_reward(self, reward, done):
         # penalise extra steps even if not terminal: in theory one
@@ -80,4 +79,4 @@ if __name__ == '__main__':
                 episode, steps, np.sum(rewards), np.mean(performance), epsilon)
             )
     print(Qtable.Qtable)
-    print(Qtable.episodes)
+    print(Qtable.counters)
