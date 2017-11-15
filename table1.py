@@ -27,21 +27,22 @@ class FrozenLakeQTable(object):
             return np.random.choice(possible_actions)
 
     def train(self, state, action, reward, next_state, done):
-        R = self.transform_reward(reward, done)
+        R = transform_reward(reward, done)
         maxNextQ = np.max(self.Qtable[next_state, :])
         update = R + self.gamma * maxNextQ - self.Qtable[state, action]
         self.Qtable[state, action] += update / self.counters[state, action]
         self.counters[state, action] += 1
 
-    def transform_reward(self, reward, done):
-        # penalise extra steps even if not terminal: in theory one
-        # can make at most 4 steps from any place to any other place
-        if reward >= 1:
-            return 10.
-        elif not done:
-            return -0.1
-        else:
-            return -2.0
+
+def transform_reward(reward, done):
+    # penalise extra steps even if not terminal: in theory one
+    # can make at most 4 steps from any place to any other place
+    if reward >= 1:
+        return 10.
+    elif not done:
+        return -0.1
+    else:
+        return -2.0
 
 
 if __name__ == '__main__':
