@@ -29,7 +29,7 @@ class FrozenLakeQTable(object):
     def train(self, state, action, reward, next_state, done):
         R = self.transform_reward(reward, done)
         maxNextQ = np.max(self.Qtable[next_state, :])
-        update = R + done * self.gamma * maxNextQ - self.Qtable[state, action]
+        update = R + self.gamma * maxNextQ - self.Qtable[state, action]
         self.Qtable[state, action] += update / self.counters[state, action]
         self.counters[state, action] += 1
 
@@ -39,7 +39,7 @@ class FrozenLakeQTable(object):
         if reward >= 1:
             return 10.
         elif not done:
-            return -0.5
+            return -0.1
         else:
             return -2.0
 
@@ -52,8 +52,8 @@ if __name__ == '__main__':
 
     Qtable = FrozenLakeQTable(gamma=0.95)
 
-    epsilon = 1.0
-    target = 1.0
+    epsilon = 0.5
+    target = 10.0
 
     performance = deque(maxlen=100)
     performance.append(0.)
@@ -72,7 +72,7 @@ if __name__ == '__main__':
             rewards.append(reward)
             state = next_state
         performance.append(np.sum(rewards))
-        if epsilon > 0.01 and np.mean(rewards) > 0:
+        if epsilon > 0.01 and np.mean(rewards) > 0 and episode >= 1000:
             epsilon *= 1.- np.mean(rewards) / target
         print(
             "episode {} steps {} total reward {} performance {} epsilon {}".format(
