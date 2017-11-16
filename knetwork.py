@@ -67,7 +67,7 @@ class Controller(object):
         x_batch, y_batch = list(), list()
         for state, action, reward, next_state, done in minibatch:
             y_target = self.action_model.predict([state])
-            y_target[0, action] = reward + done * self.gamma * np.max(
+            y_target[0, action] = reward + self.gamma * np.max(
                 self.action_model.predict(next_state)
                 )
             x_batch.append(state[0])
@@ -82,8 +82,8 @@ if __name__ == "__main__":
     controller = Controller(
         n_input=env.observation_space.n, n_output=env.action_space.n)
 
-    n_episodes = 2000
-    epsilon = 0.2
+    n_episodes = 10000
+    epsilon = 0.5
     target = 1.
     benchmark = 0.78
     scores = deque(maxlen=100)
