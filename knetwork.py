@@ -85,7 +85,7 @@ if __name__ == "__main__":
         n_input=env.observation_space.n, n_output=env.action_space.n)
 
     n_episodes = 10000
-    epsilon = 0.5
+    epsilon = 1.0
     target = 1.
     benchmark = 0.78
     scores = deque(maxlen=100)
