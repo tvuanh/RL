@@ -62,8 +62,10 @@ class Controller(object):
             return np.argmax(Q)
 
     def replay(self):
-        size = min(len(self.memory), self.batch_size)
-        minibatch = random.sample(self.memory, k=size)
+        if len(self.memory) <= self.batch_size:
+            minibatch = self.memory
+        else:
+            minibatch = random.sample(self.memory, k=self.batch_size)
         x_batch, y_batch = list(), list()
         for state, action, reward, next_state, done in minibatch:
             y_target = self.action_model.predict([state])
@@ -87,8 +89,11 @@ if __name__ == "__main__":
     target = 1.
     benchmark = 0.78
     scores = deque(maxlen=100)
+    scores.append(0.0)
 
-    for episode in range(n_episodes):
+    episode = 0
+    while episode < n_episodes and np.mean(scores) < 0.78:
+        episode += 1
         state = env.reset()
         done = False
         intra_episode_total_reward = 0
@@ -108,6 +113,4 @@ if __name__ == "__main__":
                 episode, steps, intra_episode_total_reward, np.mean(scores), epsilon
                 )
             )
-        if np.mean(scores) >= benchmark:
-            print("Learned how to play after {} episodes".format(episode))
         controller.replay()
