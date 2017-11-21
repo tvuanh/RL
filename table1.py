@@ -80,19 +80,16 @@ def transform_reward(reward, done):
         return -2.0
 
 
-if __name__ == '__main__':
-
-    # best so far: epsilon = 0.5, alpha = 0.5
+def play(episodes=10000):
     env = gym.make('FrozenLake-v0')
-#     env = gym.wrappers.Monitor(env, '/tmp/frozenlake-v0', force=True)
 
-    Qtable = FrozenLakeQTable(gamma=0.95, minvisits=20)
+    Qtable = FrozenLakeQTable(gamma=0.8, minvisits=20)
 
     performance = deque(maxlen=100)
     performance.append(0.)
 
     episode = 0
-    while episode < 10000 and np.mean(performance) < 0.78:
+    while episode < episodes and np.mean(performance) < 0.78:
         episode += 1
         state = env.reset()
 
@@ -106,8 +103,17 @@ if __name__ == '__main__':
             rewards.append(reward)
             state = next_state
         performance.append(np.sum(rewards))
-        print(
-            "episode {} steps {} total reward {} performance {}".format(
-                episode, steps, np.sum(rewards), np.mean(performance))
-            )
-    print(Qtable.Qmean)
+        # print(
+        #     "episode {} steps {} total reward {} performance {}".format(
+        #         episode, steps, np.sum(rewards), np.mean(performance))
+        #     )
+    return episode
+
+
+if __name__ == '__main__':
+    episodes = 10000
+    nplays = 50
+    results = np.array([play(episodes) for _ in range(nplays)])
+    success = results < episodes
+    print("Total number of successful plays is {}/{}".format(np.sum(success), nplays))
+    print("Average number of episodes before success per play {}".format(np.mean(results[success])))
