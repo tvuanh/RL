@@ -61,8 +61,8 @@ class Controller(object):
         else:
             minibatch = random.sample(self.memory, k=self.batch_size)
         x_batch, y_batch = list(), list()
-        for state, action, reward, next_state, done in minibatch:
-            y_target = self.action_model.predict([state])
+        for state, action, reward, next_state, _ in minibatch:
+            y_target = self.action_model.predict(state)
             y_target[0, action] = reward + self.gamma * np.max(
                 self.action_model.predict(next_state)
                 )
