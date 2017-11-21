@@ -9,12 +9,6 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.initializers import RandomNormal
 
-# result location
-result_location = "/tmp/cartpole-keras-1"
-
-# set random seed
-np.random.seed(100)
-
 
 class Controller(object):
 
