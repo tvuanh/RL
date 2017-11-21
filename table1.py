@@ -33,8 +33,8 @@ class FrozenLakeQTable(object):
             return np.random.choice(self.actions_space)
         else:
             means, variances = self.Qmean[state, :], self.Qvar[state, :]
-            upper_bounds = means + 2. * np.sqrt(np.divide(variances, visits))
-            return self.action_from_values(upper_bounds)
+            values = means + np.random.rand(4) * np.sqrt(np.divide(variances, visits))
+            return self.action_from_values(values)
 
     def action_from_values(self, values):
         maxvalue = np.max(values)
