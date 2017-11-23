@@ -33,7 +33,8 @@ class FrozenLakeQTable(object):
             return np.random.choice(self.actions_space)
         else:
             means, variances = self.Qmean[state, :], self.Qvar[state, :]
-            values = means + np.random.rand(4) * np.sqrt(np.divide(variances, visits))
+            sigmas = np.sqrt(np.divide(variances, visits))
+            values = means + np.random.randn(len(self.actions_space)) * sigmas
             return self.action_from_values(values)
 
     def action_from_values(self, values):
