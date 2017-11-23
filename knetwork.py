@@ -52,7 +52,7 @@ class Controller(object):
         if np.random.rand(1) < epsilon:
             return np.random.choice(self.action_space)
         else:
-            Q = self.action_model.predict(self.preprocess_state(state))
+            Q = self.action_model.predict(self.preprocess_state(state))[0]
             return np.argmax(Q)
 
     def replay(self):
