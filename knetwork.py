@@ -73,20 +73,20 @@ class Controller(object):
             verbose=False)
 
 
-if __name__ == "__main__":
+def play(episodes):
     env = gym.make("FrozenLake-v0")
     controller = Controller(
         n_input=env.observation_space.n, n_output=env.action_space.n)
 
-    n_episodes = 10000
     epsilon = 1.0
     target = 1.
     benchmark = 0.78
     scores = deque(maxlen=100)
     scores.append(0.0)
+    maxscore = np.mean(scores)
 
     episode = 0
-    while episode < n_episodes and np.mean(scores) < 0.78:
+    while episode < episodes and np.mean(scores) < 0.78:
         episode += 1
         state = env.reset()
         done = False
@@ -100,11 +100,23 @@ if __name__ == "__main__":
             intra_episode_total_reward += reward
             steps += 1
         scores.append(intra_episode_total_reward)
-        if epsilon > 0.01 and intra_episode_total_reward > 0:
+
+        if epsilon > 0.01 and intra_episode_total_reward > 0 and np.mean(scores) > maxscore:
+            maxscore = np.mean(scores)
             epsilon *= 1. - intra_episode_total_reward / target / steps
-        print(
-            "episode {} steps {} score {} average score {} epsilon {}".format(
-                episode, steps, intra_episode_total_reward, np.mean(scores), epsilon
-                )
-            )
+        # print(
+        #     "episode {} steps {} score {} average score {} epsilon {} maxscore {}".format(
+        #         episode, steps, intra_episode_total_reward, np.mean(scores), epsilon, maxscore
+        #         )
+        #     )
         controller.replay()
+    return episode
+
+
+if __name__ == "__main__":
+    episodes = 10000
+    nplays = 10
+    results = np.array([play(episodes) for _ in range(nplays)])
+    success = results < episodes
+    print("Total number of successful plays is {}/{}".format(np.sum(success), nplays))
+    print("Average number of episodes before success per play {}".format(np.mean(results[success])))
