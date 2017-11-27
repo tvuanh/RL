@@ -81,7 +81,7 @@ def transform_reward(reward, done):
         return -2.0
 
 
-def play(episodes=10000):
+def play(episodes, verbose=False):
     env = gym.make('FrozenLake-v0')
 
     Qtable = FrozenLakeQTable(gamma=0.8, minvisits=20)
@@ -104,10 +104,11 @@ def play(episodes=10000):
             rewards.append(reward)
             state = next_state
         performance.append(np.sum(rewards))
-        # print(
-        #     "episode {} steps {} total reward {} performance {}".format(
-        #         episode, steps, np.sum(rewards), np.mean(performance))
-        #     )
+        if verbose:
+            print(
+                "episode {} steps {} total reward {} performance {}".format(
+                    episode, steps, np.sum(rewards), np.mean(performance))
+                )
     return episode
 
 
