@@ -7,19 +7,19 @@ import gym
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
-from keras.initializers import RandomNormal
 
 
 class Controller(object):
 
-    def __init__(self, n_input, n_output, gamma=1., batch_size=5, model_instances=10):
+    def __init__(self, n_input, n_output, gamma=0.7, batch_size=30, model_instances=4):
         self.n_input = n_input
         self.n_output = n_output
         self.action_space = range(n_output)
         self.gamma = gamma
         self.batch_size = batch_size
         self.model_instances = model_instances
-        self.memory = deque(maxlen=10 * batch_size * model_instances)
+        self.memory = dict()
+        self.visits = np.zeros((n_input, n_output))
 
         # action neural network
         self.action_models = []
@@ -28,10 +28,7 @@ class Controller(object):
             model.add(
                 Dense(
                     self.n_output, input_dim=self.n_input, activation="linear",
-                    kernel_initializer=RandomNormal(
-                        mean=0.0, stddev=0.005, seed=None
-                        ),
-                    use_bias=False
+                    kernel_initializer="zeros", use_bias=False
                     )
                 )
             model.compile(
@@ -43,33 +40,41 @@ class Controller(object):
         return np.identity(self.n_input)[state : state + 1]
 
     def memorize(self, state, action, reward, next_state, done):
-        self.memory.append(
-            (
-                self.preprocess_state(state),
-                action, reward,
-                self.preprocess_state(next_state),
-                done
-                )
+        mem = self.memory.get(reward)
+        if mem is None:
+            mem = deque(maxlen=10 * self.batch_size * self.model_instances)
+        mem.append(
+        (
+            self.preprocess_state(state),
+            action, reward,
+            self.preprocess_state(next_state),
+            done
             )
+        )
+        self.memory[reward] = mem
+        self.visits[state, action] += 1
 
     def optimal_action(self, state):
-        if len(self.memory) < self.model_instances * self.batch_size:
-            return np.random.choice(self.action_space)
-        s = self.preprocess_state(state)
-        Qs = [model.predict(s)[0] for model in self.action_models]
-        actions = np.argmax(Qs, axis=1)
-        return np.random.choice(actions)
+        visits = self.visits[state, :]
+        if np.min(visits) < self.batch_size:
+            action = np.random.choice(self.action_space)
+        else:
+            s = self.preprocess_state(state)
+            Qs = [model.predict(s)[0] for model in self.action_models]
+            # estimate means and sigmas then draw random events to smoothen the sampling
+            means = np.mean(Qs, axis=0)
+            sigmas = np.sqrt(np.var(Qs, axis=0, ddof=1) / self.model_instances)
+            draws = means + sigmas * np.random.randn(self.n_output)
+            action = np.argmax(draws)
+        return action
 
     def replay(self):
         for model in self.action_models:
-            if len(self.memory) <= self.model_instances * self.batch_size:
-                minibatch = self.memory
-            else:
-                minibatch = random.sample(self.memory, k=self.batch_size)
+            minibatch = self.prepare_minibatch()
             x_batch, y_batch = list(), list()
-            for state, action, reward, next_state, _ in minibatch:
+            for state, action, reward, next_state, done in minibatch:
                 y_target = model.predict(state)
-                y_target[0, action] = reward + self.gamma * np.max(
+                y_target[0, action] = reward + (1 - done) * self.gamma * np.max(
                     model.predict(next_state)
                     )
                 x_batch.append(state[0])
@@ -78,8 +83,19 @@ class Controller(object):
                 np.array(x_batch), np.array(y_batch), batch_size=len(x_batch),
                 verbose=False)
 
+    def prepare_minibatch(self):
+        minibatch = []
+        for c in self.memory.keys():
+            mem = self.memory[c]
+            if len(mem) <= self.model_instances * self.batch_size:
+                size = max(1, len(mem) / self.model_instances)
+            else:
+                size = self.batch_size
+            minibatch += random.sample(mem, size)
+        return minibatch
 
-def play(episodes):
+
+def play(episodes, verbose=False):
     env = gym.make("FrozenLake-v0")
     controller = Controller(
         n_input=env.observation_space.n, n_output=env.action_space.n)
@@ -104,19 +120,21 @@ def play(episodes):
             steps += 1
         scores.append(intra_episode_total_reward)
 
-        print(
-            "episode {} steps {} score {} average score {}".format(
-                episode, steps, intra_episode_total_reward, np.mean(scores)
+        if verbose:
+            print(
+                "episode {} steps {} score {} average score {}".format(
+                    episode, steps, intra_episode_total_reward, np.mean(scores)
+                    )
                 )
-            )
+
         controller.replay()
     return episode
 
 
 if __name__ == "__main__":
-    episodes = 10000
-    nplays = 1
-    results = np.array([play(episodes) for _ in range(nplays)])
+    episodes = 5000
+    nplays = 30
+    results = np.array([play(episodes, verbose=True) for _ in range(nplays)])
     success = results < episodes
     print("Total number of successful plays is {}/{}".format(np.sum(success), nplays))
     print("Average number of episodes before success per play {}".format(np.mean(results[success])))
