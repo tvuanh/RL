@@ -5,6 +5,8 @@ import numpy as np
 
 import gym
 
+from utils import transform_reward
+
 
 class FrozenLakeQTable(object):
 
@@ -70,21 +72,10 @@ class FrozenLakeQTable(object):
             )
 
 
-def transform_reward(reward, done):
-    # penalise extra steps even if not terminal: in theory one
-    # can make at most 4 steps from any place to any other place
-    if reward >= 1:
-        return 10.
-    elif not done:
-        return -0.1
-    else:
-        return -2.0
-
-
 def play(episodes, verbose=False):
     env = gym.make('FrozenLake-v0')
 
-    Qtable = FrozenLakeQTable(gamma=0.8, minvisits=20)
+    Qtable = FrozenLakeQTable(gamma=0.9, minvisits=30)
 
     performance = deque(maxlen=100)
     performance.append(0.)
@@ -113,8 +104,8 @@ def play(episodes, verbose=False):
 
 
 if __name__ == '__main__':
-    episodes = 10000
-    nplays = 50
+    episodes = 5000
+    nplays = 30
     results = np.array([play(episodes) for _ in range(nplays)])
     success = results < episodes
     print("Total number of successful plays is {}/{}".format(np.sum(success), nplays))
