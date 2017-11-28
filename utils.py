@@ -6,7 +6,7 @@ def transform_reward(reward, done):
     >>> transform_reward(reward=0.5, done=False)
     -0.1
     >>> transform_reward(reward=1, done=False)
-    10.
+    10.0
     >>> transform_reward(reward=0, done=True)
     -2.0
     """
