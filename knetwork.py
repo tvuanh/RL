@@ -40,9 +40,10 @@ class Controller(object):
         return np.identity(self.n_input)[state : state + 1]
 
     def memorize(self, state, action, reward, next_state, done):
-        mem = self.memory.get(reward)
-        if mem is None:
-            mem = deque(maxlen=10 * self.batch_size * self.model_instances)
+        mem = self.memory.get(
+            reward,
+            deque(maxlen=10 * self.batch_size * self.model_instances)
+            )
         mem.append(
         (
             self.preprocess_state(state),
@@ -133,7 +134,7 @@ def play(episodes, verbose=False):
 
 if __name__ == "__main__":
     episodes = 5000
-    nplays = 30
+    nplays = 1
     results = np.array([play(episodes, verbose=True) for _ in range(nplays)])
     success = results < episodes
     print("Total number of successful plays is {}/{}".format(np.sum(success), nplays))
