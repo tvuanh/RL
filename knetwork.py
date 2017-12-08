@@ -8,10 +8,12 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 
+from utils import transform_reward
 
-class Controller(object):
 
-    def __init__(self, n_input, n_output, gamma=0.7, batch_size=30, model_instances=4):
+class NetworkController(object):
+
+    def __init__(self, n_input, n_output, gamma=0.8, batch_size=30, model_instances=4):
         self.n_input = n_input
         self.n_output = n_output
         self.action_space = range(n_output)
@@ -75,7 +77,8 @@ class Controller(object):
             x_batch, y_batch = list(), list()
             for state, action, reward, next_state, done in minibatch:
                 y_target = model.predict(state)
-                y_target[0, action] = reward + (1 - done) * self.gamma * np.max(
+                R = transform_reward(reward, done)
+                y_target[0, action] = R + self.gamma * np.max(
                     model.predict(next_state)
                     )
                 x_batch.append(state[0])
@@ -98,7 +101,7 @@ class Controller(object):
 
 def play(episodes, verbose=False):
     env = gym.make("FrozenLake-v0")
-    controller = Controller(
+    controller = NetworkController(
         n_input=env.observation_space.n, n_output=env.action_space.n)
 
     benchmark = 0.78
