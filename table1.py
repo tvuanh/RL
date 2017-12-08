@@ -8,7 +8,7 @@ import gym
 from utils import transform_reward
 
 
-class FrozenLakeQTable(object):
+class TabularController(object):
 
     actions_space = range(4)
 
@@ -75,7 +75,7 @@ class FrozenLakeQTable(object):
 def play(episodes, verbose=False):
     env = gym.make('FrozenLake-v0')
 
-    Qtable = FrozenLakeQTable(gamma=0.8, minvisits=30)
+    Qtable = TabularController(gamma=0.8, minvisits=30)
 
     performance = deque(maxlen=100)
     performance.append(0.)
